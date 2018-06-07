@@ -11,21 +11,25 @@ server.listen(5)
 def function(connection,address):
 			
 	try:
+		#封包方式的大小
 		fileinfo_size=struct.calcsize('136si')
 		buf=connection.recv(fileinfo_size)
 		if buf:
+			#解包
 			filename,filesize=struct.unpack('136si',buf)
 			filename=filename.decode('utf-8')	
 			filename_f=filename.strip('\00')
+			#接收是否指定文件下载目录
 			c=connection.recv(1)
 			if c == '1':
 				path=connection.recv(1024)
 			if c == '2':
-				path='/home/yu/'	
+				path='/home/yu/'
 			filenewname=os.path.join(path,'new_'+filename_f)
 			print filenewname
 			print "file new name is %s, filesize is %s" %(filenewname,filesize)
 			recvd_size=0
+			#循环接收文件内容，并写入新的文件中
 			wf = open(filenewname,'wb')
 			print "write"
 			while not recvd_size==filesize:
@@ -43,9 +47,11 @@ def function(connection,address):
 while True:
 	connection,address=server.accept()
 	while True:
+		#接收client端发送字符/字符串或文件的判断字
 		data=connection.recv(1)
 		if not data:
 			break
+		#接收字符/字符串
 		if data == '1':
 			msg=connection.recv(BUFSIZE)		
 			if not msg:
@@ -53,8 +59,11 @@ while True:
 			if msg == "exit":
 				break
 			print msg
+		#接收文件信息
 		if data == '2':
+			#接收文件信息函数
 			function(connection,address)
+		#选择回复信息类型
 		remsg=raw_input("请选择回复信息类型：1.字符/字符串 2.文件: \n")
 		if not remsg:
 			break
@@ -67,7 +76,8 @@ while True:
 		if remsg == '2':
 			filepath1=raw_input("请输入要回复的文件路径：\r\n")			
 			if os.path.isfile(filepath1):
-				fileinfo_size1=struct.calcsize('136si')				
+				fileinfo_size1=struct.calcsize('136si')
+				#封包			
 				fhead1=struct.pack('136si',os.path.basename(filepath1),os.stat(filepath1).st_size)
 				
 				connection.send(fhead1)
